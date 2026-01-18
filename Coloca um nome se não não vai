@@ -259,13 +259,15 @@ for i, name in ipairs(tabs) do
 end
 
 -----------------------------------------------------------
---// NOVA ADIÇÃO: BOLA FLUTUANTE (TOGGLE)
+--// CORREÇÃO: BOLA FLUTUANTE (TOGGLE)
 -----------------------------------------------------------
 
 local toggleButton = Instance.new("ImageButton")
 toggleButton.Name = "SFzToggle"
-toggleButton.Parent = gui -- Fica no GUI, mas fora do Main para não sumir
-toggleButton.Size = UDim2.new(0, 60, 0, 60) -- Tamanho da bola
-toggleButton.Position = UDim2.new(0.1, 0, 0.1, 0) -- Posição inicial (Topo Esquerdo)
-toggleButton.BackgroundColor3 = Color3.fromRGB(80, 40, 140) -- Cor roxa caso a imagem não carregue
-toggleButton.BackgroundTrans
+toggleButton.Parent = gui 
+toggleButton.Size = UDim2.new(0, 50, 0, 50) -- Diminui um pouco para ficar mais bonito
+toggleButton.Position = UDim2.new(0.1, 0, 0.1, 0)
+toggleButton.BackgroundColor3 = Color3.fromRGB(80, 40, 140)
+toggleButton.BackgroundTransparency = 0 -- Corrigido: Estava cortado aqui
+toggleButton.BorderSizePixel = 0
+toggleButton.Active =
