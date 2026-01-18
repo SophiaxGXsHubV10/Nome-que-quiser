@@ -1,182 +1,289 @@
--- Espera o jogo carregar totalmente
+--// Espera o carregamento total
 if not game:IsLoaded() then game.Loaded:Wait() end
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer or Players.PlayerAdded:Wait()
 local pGui = player:WaitForChild("PlayerGui")
 
---// Limpeza de instâncias antigas (evita bug de rodar o script várias vezes)
-if pGui:FindFirstChild("HubFiltrado_V3_Img") then
-	pGui:FindFirstChild("HubFiltrado_V3_Img"):Destroy()
+--// Limpeza de execuções anteriores
+if pGui:FindFirstChild("SFzHub_Final") then
+    pGui:FindFirstChild("SFzHub_Final"):Destroy()
 end
 
 --// GUI Principal
 local gui = Instance.new("ScreenGui")
-gui.Name = "HubFiltrado_V3_Img"
+gui.Name = "SFzHub_Final"
 gui.ResetOnSpawn = false
-gui.DisplayOrder = 100 -- Fica por cima de outras GUIs do jogo
+gui.DisplayOrder = 999
 gui.Parent = pGui
 
---// Frame principal (O HUB)
+--// Frame Principal do Hub
 local main = Instance.new("Frame")
 main.Name = "MainFrame"
 main.Parent = gui
 main.Size = UDim2.new(0, 720, 0, 420)
 main.Position = UDim2.new(0.5, -360, 0.5, -210)
-main.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+main.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 main.Active = true
 main.Draggable = true 
 main.BorderSizePixel = 0
-main.Visible = false -- Começa invisível, abre na bolinha
+main.Visible = false -- Começa fechado, abre na bolinha
 
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 15)
-local stroke = Instance.new("UIStroke", main)
-stroke.Color = Color3.fromRGB(90, 40, 160)
-stroke.Thickness = 2
+local mainCorner = Instance.new("UICorner", main)
+mainCorner.CornerRadius = UDim.new(0, 12)
 
---// Sidebar
+local mainStroke = Instance.new("UIStroke", main)
+mainStroke.Color = Color3.fromRGB(120, 60, 200)
+mainStroke.Thickness = 2
+
+--// Sidebar (Menu Lateral)
 local sidebar = Instance.new("ScrollingFrame")
+sidebar.Name = "Sidebar"
 sidebar.Parent = main
-sidebar.Size = UDim2.new(0, 220, 1, -20)
+sidebar.Size = UDim2.new(0, 200, 1, -20)
 sidebar.Position = UDim2.new(0, 10, 0, 10)
-sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
-sidebar.ScrollBarThickness = 4
-sidebar.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+sidebar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 sidebar.BorderSizePixel = 0
-Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 15)
+sidebar.ScrollBarThickness = 2
+sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 10)
 
 local layout = Instance.new("UIListLayout", sidebar)
-layout.Padding = UDim.new(0, 6)
+layout.Padding = UDim.new(0, 5)
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	sidebar.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
+    sidebar.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
 end)
 
---// Conteúdo
+--// Conteúdo (Lado Direito)
 local content = Instance.new("Frame")
+content.Name = "Content"
 content.Parent = main
-content.Position = UDim2.new(0, 240, 0, 10)
-content.Size = UDim2.new(1, -250, 1, -20)
-content.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+content.Position = UDim2.new(0, 220, 0, 10)
+content.Size = UDim2.new(1, -230, 1, -20)
+content.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 content.BorderSizePixel = 0
-Instance.new("UICorner", content).CornerRadius = UDim.new(0, 15)
+Instance.new("UICorner", content).CornerRadius = UDim.new(0, 10)
 
+--// Tabelas de Dados
 local tabs = {
-	"🌲99 noites", "👽 Steal a brainrot", "🍎 Blox Fruits", "🏐 Voleyball Legends",
-	"⚽ Blue Lock", "🎭 Forsaken", "🌴 Grow a Garden", "🐟 Fish",
-	"👊 Campos de Batalha", "🛶 Build a Boat", "🔪 MM2", "⛏️ The Forge",
-	"🗡️ Blade Ball", "☠️ Death Ball", "🏠 Brookheaven RP", "🚂 Trilhos Mortos"
+    "🌲99 noites", "👽 Steal a brainrot", "🍎 Blox Fruits", "🏐 Voleyball Legends",
+    "⚽ Blue Lock", "🎭 Forsaken", "🌴 Grow a Garden", "🐟 Fish",
+    "👊 Campos de Batalha", "🛶 Build a Boat", "🔪 MM2", "⛏️ The Forge",
+    "🗡️ Blade Ball", "☠️ Death Ball", "🏠 Brookheaven RP", "🚂 Trilhos Mortos"
 }
 local pages = {}
 
-local function createSubFrame(page)
-	local sf = Instance.new("ScrollingFrame")
-	sf.Parent = page
-	sf.Position = UDim2.new(0, 10, 0, 50)
-	sf.Size = UDim2.new(1, -20, 1, -60)
-	sf.CanvasSize = UDim2.new(0, 0, 0, 0)
-	sf.BackgroundTransparency = 1
-	sf.BorderSizePixel = 0
-	sf.ScrollBarThickness = 6
+--// Função para criar botões de script dentro das páginas
+local function createScriptPage(page)
+    local sf = Instance.new("ScrollingFrame")
+    sf.Parent = page
+    sf.Size = UDim2.new(1, -20, 1, -60)
+    sf.Position = UDim2.new(0, 10, 0, 50)
+    sf.BackgroundTransparency = 1
+    sf.BorderSizePixel = 0
+    sf.ScrollBarThickness = 4
+    sf.CanvasSize = UDim2.new(0, 0, 0, 0)
 
-	local sl = Instance.new("UIListLayout", sf)
-	sl.Padding = UDim.new(0, 8)
-	sl.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    local sl = Instance.new("UIListLayout", sf)
+    sl.Padding = UDim.new(0, 8)
+    sl.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-	sl:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		sf.CanvasSize = UDim2.new(0, 0, 0, sl.AbsoluteContentSize.Y + 10)
-	end)
+    sl:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        sf.CanvasSize = UDim2.new(0, 0, 0, sl.AbsoluteContentSize.Y + 10)
+    end)
 
-	return function(text, callback)
-		local b = Instance.new("TextButton", sf)
-		b.Size = UDim2.new(1, -10, 0, 40)
-		b.Text = text
-		b.BackgroundColor3 = Color3.fromRGB(80, 40, 140)
-		b.TextColor3 = Color3.new(1, 1, 1)
-		b.Font = Enum.Font.GothamBold
-		b.TextSize = 14
-		b.BorderSizePixel = 0
-		Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
-		b.MouseButton1Click:Connect(function() pcall(callback) end)
-	end
+    return function(text, callback)
+        local btn = Instance.new("TextButton", sf)
+        btn.Size = UDim2.new(1, -10, 0, 38)
+        btn.Text = text
+        btn.BackgroundColor3 = Color3.fromRGB(60, 40, 110)
+        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 14
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+        btn.MouseButton1Click:Connect(function() pcall(callback) end)
+    end
 end
 
+--// GERAÇÃO DE TODAS AS ABAS E SCRIPTS (SEM RESUMIR)
 for i, name in ipairs(tabs) do
-	local button = Instance.new("TextButton", sidebar)
-	button.Size = UDim2.new(0.9, 0, 0, 35)
-	button.Text = name
-	button.BackgroundColor3 = Color3.fromRGB(60, 30, 100)
-	button.TextColor3 = Color3.new(1, 1, 1)
-	button.Font = Enum.Font.Gotham
-	button.TextSize = 13
-	Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
+    local tabBtn = Instance.new("TextButton", sidebar)
+    tabBtn.Size = UDim2.new(0.9, 0, 0, 35)
+    tabBtn.Text = name
+    tabBtn.BackgroundColor3 = Color3.fromRGB(45, 35, 70)
+    tabBtn.TextColor3 = Color3.new(1, 1, 1)
+    tabBtn.Font = Enum.Font.Gotham
+    tabBtn.TextSize = 12
+    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 6)
 
-	local page = Instance.new("Frame", content)
-	page.Size = UDim2.new(1, 0, 1, 0)
-	page.Visible = (i == 1)
-	page.BackgroundTransparency = 1
-	pages[name] = page
+    local page = Instance.new("Frame", content)
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.Visible = (i == 1)
+    page.BackgroundTransparency = 1
+    pages[name] = page
 
-	local titleText = name
-	if name == "🏐 Voleyball Legends" then titleText = name .. " ⚠️ ALTO RISCO" end
+    local title = Instance.new("TextLabel", page)
+    title.Size = UDim2.new(1, 0, 0, 40)
+    title.Text = name
+    title.Font = Enum.Font.GothamBlack
+    title.TextSize = 18
+    title.TextColor3 = Color3.fromRGB(180, 130, 255)
+    title.BackgroundTransparency = 1
 
-	local title = Instance.new("TextLabel", page)
-	title.Size = UDim2.new(1, 0, 0, 40)
-	title.Text = titleText
-	title.Font = Enum.Font.GothamBlack
-	title.TextSize = 20
-	title.TextColor3 = Color3.fromRGB(180, 140, 255)
-	if name == "🏐 Voleyball Legends" then title.TextColor3 = Color3.fromRGB(255, 50, 50) end
-	title.BackgroundTransparency = 1
+    local addScript = createScriptPage(page)
 
-	local addSub = createSubFrame(page)
+    --// LISTA COMPLETA DE SCRIPTS POR CATEGORIA
+    if name == "🌲99 noites" then
+        addScript("Void Ware (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua",true))() end)
+        addScript("H4x (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/H4xScripts/Loader/refs/heads/main/loader.lua",true))() end)
+        addScript("Foxname (sem key)", function() loadstring(game:HttpGet("https://rawscripts.net/raw/99-Nights-in-the-Forest-Foxname-Hub-57131"))() end)
+        addScript("Ntt Hub (com key)", function() loadstring(game:HttpGet('https://ntt-hub.xyz/api/repo?id1=main&id2=lua'))() end)
+        addScript("Simplicitiy (sem key)", function() loadstring(game:HttpGet("https://pastebin.com/raw/husyDTrd"))() end)
+        addScript("Diamantes (sem key)", function() getgenv().WebhookURL = "" loadstring(game:HttpGet("https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/Farm%20Diamond%20v2.lua"))() end)
+        addScript("Farm Days & Diamond (sem key)", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/FNDayFarm.lua'))() end)
 
-	-- (Mantive todas as suas abas e scripts originais aqui)
-	if name == "🌲99 noites" then addSub("Void Ware", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua",true))() end)
-	elseif name == "👽 Steal a brainrot" then addSub("Lemon Hub", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/c4281c3937ebd537cb9e860182e41141.lua"))() end)
-	elseif name == "🍎 Blox Fruits" then addSub("REDZ HUB", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/luraobermeyer-jpg/redzhub/refs/heads/main/redzhub.lua.txt"))() end)
-	end -- (Adicione os outros scripts aqui se precisar, encurtei para o exemplo)
+    elseif name == "👽 Steal a brainrot" then
+        addScript("Lennon hub (sem key) ⭐", function() loadstring(game:HttpGet("https://pastefy.app/MJw2J4T6/raw"))() end)
+        addScript("Lumora (sem key) ⭐", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/3e7e5539bf07cd98f855ebb0c29c8081.lua"))() end)
+        addScript("Overflow (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/OverflowBGSI/Overflow/refs/heads/main/loader.txt"))() end)
+        addScript("Lurk Hack V3 (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/egor2078f/Lurkv3/refs/heads/main/main.lua", true))() end)
+        addScript("Lurk Hack V4 (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/egor2078f/lurkhackv4/refs/heads/main/main.lua", true))() end)
+        addScript("Senju (com key)", function() loadstring(game:HttpGet("https://pastebin.com/raw/wk11PpEw"))() end)
+        addScript("Devil Ugly (sem key)", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/53325754de16c11fbf8bf78101c1c881.lua"))() end)
+        addScript("Dofug (sem key)", function() loadstring(game:HttpGet("https://gist.githubusercontent.com/UCT-hub/b8fcd843274469d860f91b041eb7f52f/raw/7d491ea8078224e31b8850192bd3f2da37acec8f/UCTHUBDOFUG"))() end)
+        addScript("Ajazz (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/onliengamerop/Steal-a-brainrot/refs/heads/main/Protected_3771863424757750.lua.txt"))() end)
+        addScript("Liphyr (sem key)", function() loadstring(game:HttpGet("https://pastefy.app/9fgffG4l/raw"))() end)
+        addScript("Cartola Hub (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Davi999z/Cartola-Hub/refs/heads/main/StealABrainrot.lua",true))() end)
+        addScript("Flame Hub (sem key)", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/shizukidev/FlameNslx/refs/heads/main/flamexnslx.lua'))() end)
+        addScript("Namelass (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/ily123950/Vulkan/refs/heads/main/Tr"))() end)
+        addScript("Trax Spawner (com key)", function() loadstring(game:HttpGet("https://gitlab.com/traxscriptss/traxscriptss/-/raw/main/visual2.lua"))() end)
+        addScript("Luminum Hub (com key)", function() loadstring(game:HttpGet("http://luminon.top/loader.lua"))() end)
+        addScript("Kurd Hub (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Ninja10908/S4/refs/heads/main/Kurdhub"))() end)
+        addScript("Lemon Hub (sem key)", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/c4281c3937ebd537cb9e860182e41141.lua"))() end)
+        addScript("LH Hub (sem key)", function() loadstring(game:HttpGet("https://pastefy.app/o9mKKAda/raw"))() end)
+        addScript("Zzzz Hub (sem key)", function() loadstring(game:HttpGet("https://pastefy.app/DHyT4Zoi/raw"))() end)
+
+    elseif name == "🍎 Blox Fruits" then
+        addScript("GRAVITY HUB (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Dev-GravityHub/BloxFruit/refs/heads/main/Main.lua"))() end)
+        addScript("SPEED HUB (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/AhmadV99/Speed-Hub-X/main/Speed%20Hub%20X.lua"))() end)
+        addScript("XETER HUB (sem key)", function() getgenv().Version = "V3" getgenv().Team = "Marines" loadstring(game:HttpGet("https://raw.githubusercontent.com/TlDinhKhoi/Xeter/refs/heads/main/Main.lua"))() end)
+        addScript("KNCRYPT (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/3345-c-a-t-s-u-s/Kncrypt/refs/heads/main/sources/BloxFruit.lua"))() end)
+        addScript("AURORA (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Jadelly261/BloxFruits/main/Aurora",true))() end)
+        addScript("ARCENEY (com key)", function() loadstring(game.HttpGet(game,'https://raw.githubusercontent.com/Yumiara/Python/refs/heads/main/BloxFruit-XYZ.lua'))() end)
+        addScript("OMG hub (??? Key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Omgshit/Scripts/main/MainLoader.lua"))() end)
+        addScript("QUANTUM ONYX (sem key) ⭐", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/flazhy/QuantumOnyx/refs/heads/main/QuantumOnyx.lua"))() end)
+        addScript("ASTRAL (sem key)", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Blox-Fruits-ASTRAL-29222"))() end)
+        addScript("REDZ HUB (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/luraobermeyer-jpg/redzhub/refs/heads/main/redzhub.lua.txt"))() end)
+        addScript("DEEP HUB (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/GoblinKun009/script/refs/heads/main/Deep", true))() end)
+        addScript("BlueX-Hub (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Dev-BlueX/BlueX-Hub/refs/heads/main/Main.lua"))() end)
+        addScript("Hoho (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/acsu123/HOHO_H/main/Loading_UI"))() end)
+        addScript("Solix Hub (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/debunked69/Solixreworkkeysystem/refs/heads/main/solix%20new%20keyui.lua"))() end)
+        addScript("Aim Bot (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/ParadozCode/CentuDox-Hub-Paradoz-Hub/refs/heads/main/CentudoxLoader.xyz", true))() end)
+        addScript("Thunder Z (com key)", function() loadstring(game:HttpGet(('https://raw.githubusercontent.com/ThunderZ-05/HUB/main/TestKey')))() end)
+
+    elseif name == "🏐 Voleyball Legends" then
+        addScript("Napoleon Hub (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/raydjs/napoleonHub/refs/heads/main/src.lua"))() end)
+        addScript("SkibidiCen (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/SkibidiCen/MainMenu/main/Code"))() end)
+        addScript("Azure (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/notjohnnylol/boiazuresotuff/refs/heads/main/loader"))() end)
+        addScript("Sigma Hub (bugado)", function() loadstring(game.HttpGet(game, 'https://raw.githubusercontent.com/Xm2iufas09ijmF/sigma-hub/refs/heads/main/temp.lua'))() end)
+        addScript("Hitbox Expander (sem key)", function() loadstring(game:HttpGet("https://rawscripts.net/raw/UPD-Volleyball-Legends-Hitbox-expander-NO-KEY-63949"))() end)
+
+    elseif name == "⚽ Blue Lock" then
+        addScript("BL Rivals (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/LHking123456/7L93r5NhJxqYu/refs/heads/main/BLRivals"))() end)
+        addScript("SkibidiCen (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/SkibidiCen/MainMenu/main/Code"))() end)
+
+    elseif name == "🎭 Forsaken" then
+        addScript("SkibidiCen Forsaken", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/SkibidiCen/MainMenu/main/Code"))() end)
+        addScript("Moondiety (com key)", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/m00ndiety/Moondiety/refs/heads/main/Loader'))() end)
+        addScript("Sak Forsaken (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/OhhMyGehlee/sak/refs/heads/main/for"))() end)
+        addScript("SNT HUB (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Snowt69/SNT-HUB/refs/heads/main/Forsaken"))() end)
+
+    elseif name == "🌴 Grow a Garden" then
+        addScript("Speed Hub X ⭐", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/AhmadV99/Speed-Hub-X/main/Speed%20Hub%20X.lua"))() end)
+        addScript("Best Autofarm (com key)", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Grow-a-Garden-Best-Autofarm-Script-GUI-73698"))() end)
+
+    elseif name == "🐟 Fish" then
+        addScript("Disch Script (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/hakariqScripts/disch2/refs/heads/main/disch%20script"))() end)
+        addScript("Space Hub (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/ago106/SpaceHub/refs/heads/main/Multi"))() end)
+        addScript("Eclipse Fisch (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/yolobradda/eclipsefisch/refs/heads/main/eclipsefisch"))() end)
+
+    elseif name == "👊 Campos de Batalha" then
+        addScript("Aim Lock/Block", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Cyborg883/CombatGUI/refs/heads/main/TSBCombatGUI"))() end)
+        addScript("Nova Hub ⭐", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Silly-Nova/Nova-Hub/refs/heads/main/TheStrongestBattlegrounds.lua"))() end)
+
+    elseif name == "🛶 Build a Boat" then
+        addScript("Auto Build ⭐", function() loadstring(game:HttpGet(("https://raw.githubusercontent.com/max2007killer/auto-build-not-limit/main/buildaboatv2obs.txt"),true))() end)
+        addScript("BABFT Hub (com key)", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/TheRealAsu/BABFT/refs/heads/main/Loader.lua'))() end)
+
+    elseif name == "🔪 MM2" then
+        addScript("Capybara Hub (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/BaconScrr/Murder-Mystery-2/refs/heads/main/Capybara%20Hub"))() end)
+        addScript("YARHM (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Joystickplays/psychic-octo-invention/main/source/yarhm/1.20/yarhm.lua"))() end)
+        addScript("Vertex Peak (sem key)", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/vertex-peak/vertex/refs/heads/main/loadstring'))() end)
+
+    elseif name == "⛏️ The Forge" then
+        addScript("Haze Hub (sem key)", function() loadstring(game:HttpGet("https://haze.wtf/api/script"))() end)
+        addScript("Nousigi (com key)", function() loadstring(game:HttpGet("https://nousigi.com/loader.lua"))() end)
+        addScript("Polluted (sem key)", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/ecfcccea43f60fa4c46009f854c06a52.lua"))() end)
+        addScript("Shaizy (sem key)", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/d29f750a5d2c74070b792230ccde0f69.lua"))() end)
+
+    elseif name == "🗡️ Blade Ball" then
+        addScript("NodeX Hub (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/NodeX-Enc/NodeX/refs/heads/main/Main.lua"))() end)
+
+    elseif name == "☠️ Death Ball" then
+        addScript("Native Hub ⭐", function() loadstring(game:HttpGet("https://getnative.cc/script/loader"))() end)
+        addScript("Haze Hub (sem key)", function() loadstring(game:HttpGet("https://haze.wtf/api/script"))() end)
+
+    elseif name == "🏠 Brookheaven RP" then
+        addScript("C00LKIDD HUB", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Brookhaven-RP-C00LKIDD-HUB-By-lkzin-69221"))() end)
+        addScript("Neon X Hub", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Brookhaven-RP-Neon-X-Hub-Brookhaven-UPDATE-69265"))() end)
+        addScript("Demon Hub (key=29200220274)", function() loadstring(game:HttpGet("https://pastefy.app/vn8cfnLw/raw"))() end)
+        addScript("Fly Car (sem key)", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Brookhaven-RP-Mikeexc-Car-Fly-68939"))() end)
+
+    elseif name == "🚂 Trilhos Mortos" then
+        addScript("Gumanba Hub (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/gumanba/Scripts/refs/heads/main/DeadRails", true))() end)
+        addScript("SSBS Scripts (sem key)", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/S-S-B-S/S-S-B-S-Scripts/main/Dead%20Rails.lua'))() end)
+    end
+
+    --// Lógica de trocar aba
+    tabBtn.MouseButton1Click:Connect(function()
+        for _, p in pairs(pages) do p.Visible = false end
+        page.Visible = true
+    end)
 end
 
+--// BOTÃO FLUTUANTE (IMAGE BUTTON)
+local toggle = Instance.new("ImageButton")
+toggle.Name = "SFzToggle"
+toggle.Parent = gui
+toggle.Size = UDim2.new(0, 65, 0, 65)
+toggle.Position = UDim2.new(0.02, 0, 0.45, 0)
+toggle.BackgroundColor3 = Color3.fromRGB(35, 30, 50)
+toggle.BorderSizePixel = 0
+toggle.ZIndex = 1000
+toggle.Draggable = true -- Nota: Ativar se seu executor suportar, senão requer script de arrasto
 
---// BOLA FLUTUANTE (AGORA COM IMAGEM)
--- Troquei TextButton por ImageButton
-local toggleButton = Instance.new("ImageButton")
-toggleButton.Name = "SFzToggleImg"
-toggleButton.Parent = gui 
-toggleButton.Size = UDim2.new(0, 70, 0, 70) -- Aumentei um pouco para a imagem caber melhor
-toggleButton.Position = UDim2.new(0.02, 0, 0.4, 0) -- Canto esquerdo
-toggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 40) -- Fundo escuro para a imagem brilhar
-toggleButton.BorderSizePixel = 0
-toggleButton.ZIndex = 999
-toggleButton.Draggable = true 
+--// ID DA IMAGEM (Troque 6031094678 pelo ID da imagem SFz Hub que você upar)
+toggle.Image = "rbxassetid://6031094678" 
+toggle.ScaleType = Enum.ScaleType.Fit
 
-----------------------------------------------------------------
--- ATENÇÃO: TROQUE O ID ABAIXO PELO ID DA SUA IMAGEM "SFz hub"
-----------------------------------------------------------------
--- Usei um ID de exemplo (um ícone roxo). Quando você upar sua imagem,
--- copie o número do ID dela e cole no lugar de 7072729827.
-toggleButton.Image = "rbxassetid://7072729827" 
-----------------------------------------------------------------
+local toggleCorner = Instance.new("UICorner", toggle)
+toggleCorner.CornerRadius = UDim.new(1, 0)
 
--- Deixa a bolinha redonda
-Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(1, 0)
+local toggleStroke = Instance.new("UIStroke", toggle)
+toggleStroke.Color = Color3.fromRGB(140, 80, 255)
+toggleStroke.Thickness = 3
 
--- Borda brilhante roxa
-local strokeB = Instance.new("UIStroke", toggleButton)
-strokeB.Color = Color3.fromRGB(120, 50, 255)
-strokeB.Thickness = 3
-
--- Função para abrir/fechar o menu ao clicar na imagem
-toggleButton.MouseButton1Click:Connect(function()
-	main.Visible = not main.Visible
-	-- Opcional: Mudar a cor da borda quando clica
-	if main.Visible then
-		strokeB.Color = Color3.fromRGB(255, 50, 50) -- Vermelho quando aberto
-	else
-		strokeB.Color = Color3.fromRGB(120, 50, 255) -- Roxo quando fechado
-	end
+--// Ação de Abrir/Fechar
+toggle.MouseButton1Click:Connect(function()
+    main.Visible = not main.Visible
+    if main.Visible then
+        toggleStroke.Color = Color3.new(1, 1, 1)
+    else
+        toggleStroke.Color = Color3.fromRGB(140, 80, 255)
+    end
 end)
 
-print("Hub e Bolinha de Imagem carregados!")
+print("SFz Hub carregado com todos os scripts!")
