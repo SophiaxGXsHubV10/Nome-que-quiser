@@ -1,13 +1,23 @@
-wait(1) 
+-- Garante que o script espere o jogo carregar
+if not game:IsLoaded() then game.Loaded:Wait() end
 
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+local player = Players.LocalPlayer or Players.PlayerAdded:Wait()
+
+-- Verifica se a PlayerGui existe, se não, espera por ela
+local pGui = player:WaitForChild("PlayerGui", 10) 
+
+if not pGui then
+    warn("PlayerGui não encontrada! O script parou para evitar erro.")
+    return
+end
 
 --// GUI Principal
 local gui = Instance.new("ScreenGui")
-gui.Name = "HubFiltrado"
+gui.Name = "HubFiltrado_V2"
 gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.DisplayOrder = 999 -- Garante que fique em cima de tudo
+gui.Parent = pGui
 
 --// Frame principal
 local main = Instance.new("Frame")
@@ -15,6 +25,7 @@ main.Parent = gui
 main.Size = UDim2.new(0, 720, 0, 420)
 main.Position = UDim2.new(0.5, -360, 0.5, -210)
 main.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+main.Visible = true -- Começa visível para você saber que funcionou
 main.Active = true
 main.Draggable = true 
 main.BorderSizePixel = 0
@@ -258,16 +269,8 @@ for i, name in ipairs(tabs) do
 	end)
 end
 
------------------------------------------------------------
---// CORREÇÃO: BOLA FLUTUANTE (TOGGLE)
------------------------------------------------------------
-
-local toggleButton = Instance.new("ImageButton")
+--// BOLA FLUTUANTE (TOGGLE)
+local toggleButton = Instance.new("TextButton")
 toggleButton.Name = "SFzToggle"
 toggleButton.Parent = gui 
-toggleButton.Size = UDim2.new(0, 50, 0, 50) -- Diminui um pouco para ficar mais bonito
-toggleButton.Position = UDim2.new(0.1, 0, 0.1, 0)
-toggleButton.BackgroundColor3 = Color3.fromRGB(80, 40, 140)
-toggleButton.BackgroundTransparency = 0 -- Corrigido: Estava cortado aqui
-toggleButton.BorderSizePixel = 0
-toggleButton.Active =
+toggleButton.Size = U
