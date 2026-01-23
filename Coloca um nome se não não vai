@@ -315,4 +315,15 @@ for i, name in ipairs(tabs) do
 		addSub("Polluted (sem key)", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/ecfcccea43f60fa4c46009f854c06a52.lua"))() end)
 		addSub("Zenith (com key)", function() loadstring(game:HttpGet("https://zenithhub.cloud/panel/script"))() end)
 		addSub("Rift Hub (com key)", function() loadstring(game:HttpGet("https://rifton.top/loader.lua"))() end)
-		addSub("Lunor (com key)", function() loadstring(game:HttpGet("https://lunor.dev/loader"))() end
+		addSub("Lunor (com key)", function() loadstring(game:HttpGet("https://lunor.dev/loader"))() end) -- Corrigido de 'en' para 'end)'
+    end -- Fecha o bloco if/elseif das categorias
+
+    -- Lógica de troca de abas
+    button.MouseButton1Click:Connect(function()
+        for _, p in pairs(pages) do p.Visible = false end
+        page.Visible = true
+    end)
+end -- Fecha o laço for das tabs
+
+-- Notificação inicial de sucesso
+SpawnNotification()
