@@ -315,4 +315,4 @@ for i, name in ipairs(tabs) do
 		addSub("Polluted (sem key)", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/ecfcccea43f60fa4c46009f854c06a52.lua"))() end)
 		addSub("Zenith (com key)", function() loadstring(game:HttpGet("https://zenithhub.cloud/panel/script"))() end)
 		addSub("Rift Hub (com key)", function() loadstring(game:HttpGet("https://rifton.top/loader.lua"))() end)
-		addSub("Lunor (com key)", function() loadstring(game:HttpGet("https://lunor.dev/loader"))() en
+		addSub("Lunor (com key)", function() loadstring(game:HttpGet("https://lunor.dev/loader"))() end
