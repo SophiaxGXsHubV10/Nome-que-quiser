@@ -1,329 +1,159 @@
-wait(1) 
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
---// GUI Principal
-local gui = Instance.new("ScreenGui")
-gui.Name = "HubFiltrado"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+local LP = Players.LocalPlayer
 
---// --- FUNÇÃO DE NOTIFICAÇÃO (Canto Inferior Direito) ---
-local function SpawnNotification()
-    local notifyFrame = Instance.new("Frame")
-    notifyFrame.Parent = gui
-    notifyFrame.Size = UDim2.new(0, 250, 0, 70)
-    notifyFrame.Position = UDim2.new(1, 10, 1, -80) -- Começa fora da tela (direita)
-    notifyFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-    notifyFrame.BorderSizePixel = 0
-    
-    local nCorner = Instance.new("UICorner", notifyFrame)
-    nCorner.CornerRadius = UDim.new(0, 10)
-    
-    local nStroke = Instance.new("UIStroke", notifyFrame)
-    nStroke.Color = Color3.fromRGB(120, 50, 255)
-    nStroke.Thickness = 2
-
-    local nText = Instance.new("TextLabel")
-    nText.Parent = notifyFrame
-    nText.Size = UDim2.new(1, -60, 1, 0)
-    nText.Position = UDim2.new(0, 60, 0, 0)
-    nText.BackgroundTransparency = 1
-    nText.Text = "Script executado! 🙀"
-    nText.TextColor3 = Color3.new(1, 1, 1)
-    nText.Font = Enum.Font.GothamBold
-    nText.TextSize = 14
-    nText.TextXAlignment = Enum.TextXAlignment.Left
-
-    local nIcon = Instance.new("ImageLabel")
-    nIcon.Parent = notifyFrame
-    nIcon.Size = UDim2.new(0, 40, 0, 40)
-    nIcon.Position = UDim2.new(0, 10, 0, 15)
-    nIcon.BackgroundTransparency = 1
-    nIcon.Image = "rbxassetid://6023426926" -- Ícone de gatinho/emoji padrão
-
-    -- Animação de entrada
-    notifyFrame:TweenPosition(UDim2.new(1, -260, 1, -80), "Out", "Back", 0.5, true)
-    
-    -- Espera e sai
-    task.delay(3, function()
-        notifyFrame:TweenPosition(UDim2.new(1, 10, 1, -80), "In", "Sine", 0.5, true)
-        task.wait(0.5)
-        notifyFrame:Destroy()
-    end)
+-- Limpa a GUI do Auto Farm se já existir
+if LP.PlayerGui:FindFirstChild("AutoFarmGUI") then
+    LP.PlayerGui.AutoFarmGUI:Destroy()
 end
 
---// Frame principal
+-- ==========================================
+-- GUI DO AUTO FARM
+-- ==========================================
+local sg = Instance.new("ScreenGui")
+sg.Name = "AutoFarmGUI"
+sg.ResetOnSpawn = false
+sg.Parent = LP.PlayerGui
+
 local main = Instance.new("Frame")
-main.Parent = gui
-main.Size = UDim2.new(0, 720, 0, 420)
-main.Position = UDim2.new(0.5, -360, 0.5, -210)
-main.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+main.Size = UDim2.new(0, 160, 0, 60)
+main.Position = UDim2.new(0.05, 0, 0.8, 0) -- Perto da parte de baixo da tela
+main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 main.Active = true
-main.Draggable = true 
-main.BorderSizePixel = 0
-main.ClipsDescendants = true
+main.Parent = sg
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 8)
+local borda = Instance.new("UIStroke", main)
+borda.Color = Color3.fromRGB(200, 100, 0)
+borda.Thickness = 2
 
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 15)
-local stroke = Instance.new("UIStroke", main)
-stroke.Color = Color3.fromRGB(90, 40, 160)
-stroke.Thickness = 2
+local btnFarm = Instance.new("TextButton", main)
+btnFarm.Size = UDim2.new(0, 140, 0, 40)
+btnFarm.Position = UDim2.new(0, 10, 0, 10)
+btnFarm.Text = "AUTO FARM: OFF"
+btnFarm.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+btnFarm.TextColor3 = Color3.new(1, 1, 1)
+btnFarm.Font = Enum.Font.GothamBold
+btnFarm.TextSize = 12
+btnFarm.Parent = main
+Instance.new("UICorner", btnFarm).CornerRadius = UDim.new(0, 6)
 
---// --- SISTEMA DE BOTÕES DO TOPO (Fechar e Minimizar) ---
-local isMinimized = false
-local originalSize = main.Size
-
-local closeBtn = Instance.new("TextButton")
-closeBtn.Parent = main
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -35, 0, 5)
-closeBtn.BackgroundColor3 = Color3.fromRGB(80, 20, 20)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.new(1, 1, 1)
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 16
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
-closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
-
-local minBtn = Instance.new("TextButton")
-minBtn.Parent = main
-minBtn.Size = UDim2.new(0, 30, 0, 30)
-minBtn.Position = UDim2.new(1, -70, 0, 5)
-minBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-minBtn.Text = "-"
-minBtn.TextColor3 = Color3.new(1, 1, 1)
-minBtn.Font = Enum.Font.GothamBold
-minBtn.TextSize = 18
-Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 8)
-
---// Sidebar
-local sidebar = Instance.new("ScrollingFrame")
-sidebar.Parent = main
-sidebar.Size = UDim2.new(0, 220, 1, -20)
-sidebar.Position = UDim2.new(0, 10, 0, 10)
-sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
-sidebar.ScrollBarThickness = 4
-sidebar.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-sidebar.BorderSizePixel = 0
-Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 15)
-
---// Conteúdo
-local content = Instance.new("Frame")
-content.Parent = main
-content.Position = UDim2.new(0, 240, 0, 10)
-content.Size = UDim2.new(1, -250, 1, -20)
-content.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-content.BorderSizePixel = 0
-Instance.new("UICorner", content).CornerRadius = UDim.new(0, 15)
-
-minBtn.MouseButton1Click:Connect(function()
-    if not isMinimized then
-        sidebar.Visible = false
-        content.Visible = false
-        main:TweenSize(UDim2.new(0, 720, 0, 40), "Out", "Quad", 0.3, true)
-        minBtn.Text = "+"
-        isMinimized = true
-    else
-        main:TweenSize(originalSize, "Out", "Quad", 0.3, true)
-        wait(0.2)
-        sidebar.Visible = true
-        content.Visible = true
-        minBtn.Text = "-"
-        isMinimized = false
+-- Arrasto da GUI
+local drag = false
+local ds, sp
+main.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        drag = true
+        ds = i.Position
+        sp = main.Position
+        i.Changed:Connect(function()
+            if i.UserInputState == Enum.UserInputState.End then drag = false end
+        end)
+    end
+end)
+game:GetService("UserInputService").InputChanged:Connect(function(i)
+    if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+        main.Position = UDim2.new(
+            sp.X.Scale, sp.X.Offset + (i.Position.X - ds.X),
+            sp.Y.Scale, sp.Y.Offset + (i.Position.Y - ds.Y)
+        )
+    end
+end)
+game:GetService("UserInputService").InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        drag = false
     end
 end)
 
-local layout = Instance.new("UIListLayout", sidebar)
-layout.Padding = UDim.new(0, 6)
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	sidebar.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
-end)
+-- ==========================================
+-- LÓGICA DO AUTO FARM
+-- ==========================================
+local farmAtivo = false
+local loopFarm = nil
 
-local tabs = {
-    "❓ Scripts universais / aleatórios", "🌲99 noites", "👽 Steal a brainrot", "🍎 Blox Fruits", "🏐 Voleyball Legends",
-	"⚽ Blue Lock", "🎭 Forsaken", "🌴 Grow a Garden", "🐟 Fish",
-	"👊 Campos de Batalha", "🛶 Build a Boat", "🔪 MM2", "⛏️ The Forge",
-	"🗡️ Blade Ball", "☠️ Death Ball", "🏠 Brookheaven RP", "🚂 Trilhos Mortos"
-}
-local pages = {}
+local function procurarDoce()
+    local char = LP.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+    
+    local rootPos = char.HumanoidRootPart.Position
+    local doceMaisProximo = nil
+    local menorDist = math.huge
 
-local function createSubFrame(page)
-	local sf = Instance.new("ScrollingFrame")
-	sf.Parent = page
-	sf.Position = UDim2.new(0, 10, 0, 50)
-	sf.Size = UDim2.new(1, -20, 1, -60)
-	sf.CanvasSize = UDim2.new(0, 0, 0, 0)
-	sf.BackgroundTransparency = 1
-	sf.BorderSizePixel = 0
-	sf.ScrollBarThickness = 6
-	local sl = Instance.new("UIListLayout", sf)
-	sl.Padding = UDim.new(0, 8)
-	sl.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	sl:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		sf.CanvasSize = UDim2.new(0, 0, 0, sl.AbsoluteContentSize.Y + 10)
-	end)
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name == "Candy Corn" or v.Name == "CandyCorn" or v.Name == "Candy_Corn" then
+            local pos = nil
+            if v:IsA("BasePart") then
+                pos = v.Position
+            elseif v.PrimaryPart then
+                pos = v.PrimaryPart.Position
+            elseif v:FindFirstChildWhichIsA("BasePart") then
+                pos = v:FindFirstChildWhichIsA("BasePart").Position
+            end
 
-	return function(text, callback)
-		local b = Instance.new("TextButton", sf)
-		b.Size = UDim2.new(1, -10, 0, 40)
-		b.Text = text
-		b.BackgroundColor3 = Color3.fromRGB(80, 40, 140)
-		b.TextColor3 = Color3.new(1, 1, 1)
-		b.Font = Enum.Font.GothamBold
-		b.TextSize = 14
-		b.BorderSizePixel = 0
-		Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
-		
-		-- EXECUÇÃO DO SCRIPT + NOTIFICAÇÃO
-		b.MouseButton1Click:Connect(function() 
-			pcall(callback) 
-			SpawnNotification() -- Chama a notificação toda vez que clica
-		end)
-	end
+            if pos then
+                local dist = (rootPos - pos).Magnitude
+                if dist < menorDist then
+                    menorDist = dist
+                    doceMaisProximo = v
+                end
+            end
+        end
+    end
+    return doceMaisProximo
 end
 
-for i, name in ipairs(tabs) do
-	local button = Instance.new("TextButton", sidebar)
-	button.Size = UDim2.new(0.9, 0, 0, 35)
-	button.Text = name
-	button.BackgroundColor3 = Color3.fromRGB(60, 30, 100)
-	button.TextColor3 = Color3.new(1, 1, 1)
-	button.Font = Enum.Font.Gotham
-	button.TextSize = 13
-	Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
+local function loop()
+    while farmAtivo do
+        local char = LP.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local doce = procurarDoce()
+            
+            if doce then
+                local posFinal = nil
+                if doce:IsA("BasePart") then
+                    posFinal = doce.Position
+                elseif doce.PrimaryPart then
+                    posFinal = doce.PrimaryPart.Position
+                elseif doce:FindFirstChildWhichIsA("BasePart") then
+                    posFinal = doce:FindFirstChildWhichIsA("BasePart").Position
+                end
 
-	local page = Instance.new("Frame", content)
-	page.Size = UDim2.new(1, 0, 1, 0)
-	page.Visible = (i == 1)
-	page.BackgroundTransparency = 1
-	pages[name] = page
+                if posFinal then
+                    -- Teleporta (um pouco mais alto pra garantir o hitbox)
+                    char.HumanoidRootPart.CFrame = CFrame.new(posFinal + Vector3.new(0, 3, 0))
+                    
+                    -- Espera um pouquinho pra física processar o toque
+                    task.wait(0.15) 
+                    
+                    -- Verifica se o doce sumiu (foi coletado)
+                    -- Se não sumiu em 0.5 segundos, ele força a próxima busca de qualquer forma
+                    local tempoEspera = 0
+                    while doce.Parent ~= nil and tempoEspera < 0.5 do
+                        task.wait(0.05)
+                        tempoEspera = tempoEspera + 0.05
+                    end
+                end
+            else
+                -- Se não tem doce no mapa, espera um pouco e tenta de novo
+                task.wait(1)
+            end
+        else
+            task.wait(0.5)
+        end
+        task.wait() -- Cede um frame pro jogo não travar
+    end
+end
 
-	local title = Instance.new("TextLabel", page)
-	title.Size = UDim2.new(1, 0, 0, 40)
-	title.Text = name
-	title.Font = Enum.Font.GothamBlack
-	title.TextSize = 18
-	title.TextColor3 = Color3.fromRGB(180, 140, 255)
-	title.BackgroundTransparency = 1
-
-	local addSub = createSubFrame(page)
-
-    if name == "❓ Scripts universais / aleatórios" then
-		addSub("🎯 Aimbot?", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Aimbot-Mobile-34677"))() end)
-		addSub("🪩 Emotes", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Emotes-32020"))() end)
-		addSub("🎯 Aim Bot + ESP 👁️", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/agresiv111/script/refs/heads/main/main.lua"))() end)
-		addSub("🔒 Shift Lock", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Shift-Lock-by-Jorge03IsGamer-54009"))() end)
-		addSub("✈️ Fly", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Fly-gui-54742"))() end)
-
-	elseif name == "🌲99 noites" then
-		addSub("Void Ware (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua",true))() end)
-		addSub("H4x (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/H4xScripts/Loader/refs/heads/main/loader.lua",true))() end)
-		addSub("Foxname (sem key)", function() loadstring(game:HttpGet("https://rawscripts.net/raw/99-Nights-in-the-Forest-Foxname-Hub-57131"))() end)
-		addSub("Ntt Hub (com key)", function() loadstring(game:HttpGet('https://ntt-hub.xyz/api/repo?id1=main&id2=lua'))() end)
-		addSub("Simplicitiy (sem key)", function() loadstring(game:HttpGet("https://pastebin.com/raw/husyDTrd"))() end)
-		addSub("Diamantes (sem key)", function() getgenv().WebhookURL = "" loadstring(game:HttpGet("https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/Farm%20Diamond%20v2.lua"))() end)
-		addSub("Farm Days & Diamond (sem key)", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/FNDayFarm.lua'))() end)
-
-	elseif name == "👽 Steal a brainrot" then
-		addSub("Overflow (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/OverflowBGSI/Overflow/refs/heads/main/loader.txt"))() end)
-		addSub("Lurk Hack V3 (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/egor2078f/Lurkv3/refs/heads/main/main.lua", true))() end)
-		addSub("Lurk Hack V4 (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/egor2078f/lurkhackv4/refs/heads/main/main.lua", true))() end)
-		addSub("Senju (com key)", function() loadstring(game:HttpGet("https://pastebin.com/raw/wk11PpEw"))() end)
-		addSub("Devil Ugly (sem key)", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/53325754de16c11fbf8bf78101c1c881.lua"))() end)
-		addSub("Dofug (sem key)", function() loadstring(game:HttpGet("https://gist.githubusercontent.com/UCT-hub/b8fcd843274469d860f91b041eb7f52f/raw/7d491ea8078224e31b8850192bd3f2da37acec8f/UCTHUBDOFUG"))() end)
-		addSub("Ajazz (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/onliengamerop/Steal-a-brainrot/refs/heads/main/Protected_3771863424757750.lua.txt"))() end)
-		addSub("Liphyr (sem key)", function() loadstring(game:HttpGet("https://pastefy.app/9fgffG4l/raw"))() end)
-		addSub("Cartola Hub (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Davi999z/Cartola-Hub/refs/heads/main/StealABrainrot.lua",true))() end)
-		addSub("Criar Servidor Privado (sem key)", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-FREE-PRIVATE-SERVER-GUI-ANY-GAME-55939"))() end)
-		addSub("Flame Hub (sem key)", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/shizukidev/FlameNslx/refs/heads/main/flamexnslx.lua'))() end)
-		addSub("Namelass (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/ily123950/Vulkan/refs/heads/main/Tr"))() end)
-		addSub("Trax Spawner (com key)", function() loadstring(game:HttpGet("https://gitlab.com/traxscriptss/traxscriptss/-/raw/main/visual2.lua"))() end)
-		addSub("Luminum Hub (com key)", function() loadstring(game:HttpGet("http://luminon.top/loader.lua"))() end)
-		addSub("Lennon hub (sem key) ⭐ RECOMENDADO", function() loadstring(game:HttpGet("https://pastefy.app/MJw2J4T6/raw"))() end)
-		addSub("Kurd Hub (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Ninja10908/S4/refs/heads/main/Kurdhub"))() end)
-		addSub("Lemon Hub (sem key)", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/c4281c3937ebd537cb9e860182e41141.lua"))() end)
-		addSub("LH Hub (sem key)", function() loadstring(game:HttpGet("https://pastefy.app/o9mKKAda/raw"))() end)
-		addSub("Zzzz Hub (sem key)", function() loadstring(game:HttpGet("https://pastefy.app/DHyT4Zoi/raw"))() end)
-		addSub("Lumora (sem key) ⭐ Recomendado", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/3e7e5539bf07cd98f855ebb0c29c8081.lua"))() end)
-
-	elseif name == "🍎 Blox Fruits" then
-		addSub("GRAVITY HUB (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Dev-GravityHub/BloxFruit/refs/heads/main/Main.lua"))() end)
-		addSub("SPEED HUB (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/AhmadV99/Speed-Hub-X/main/Speed%20Hub%20X.lua"))() end)
-		addSub("XETER HUB (sem key)", function() getgenv().Version = "V3" getgenv().Team = "Marines" loadstring(game:HttpGet("https://raw.githubusercontent.com/TlDinhKhoi/Xeter/refs/heads/main/Main.lua"))() end)
-		addSub("KNCRYPT (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/3345-c-a-t-s-u-s/Kncrypt/refs/heads/main/sources/BloxFruit.lua"))() end)
-		addSub("AURORA (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Jadelly261/BloxFruits/main/Aurora",true))() end)
-		addSub("ARCENEY (com key)", function() loadstring(game.HttpGet(game,'https://raw.githubusercontent.com/Yumiara/Python/refs/heads/main/BloxFruit-XYZ.lua'))() end)
-		addSub("OMG hub (??? Key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Omgshit/Scripts/main/MainLoader.lua"))() end)
-		addSub("QUANTUM ONYX HUB (sem key) ⭐", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/flazhy/QuantumOnyx/refs/heads/main/QuantumOnyx.lua"))() end)
-		addSub("ASTRAL (sem key)", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Blox-Fruits-ASTRAL-29222"))() end)
-		addSub("REDZ HUB (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/luraobermeyer-jpg/redzhub/refs/heads/main/redzhub.lua.txt"))() end)
-		addSub("DEEP HUB (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/GoblinKun009/script/refs/heads/main/Deep", true))() end)
-		addSub("BlueX-Hub (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Dev-BlueX/BlueX-Hub/refs/heads/main/Main.lua"))() end)
-		addSub("Hoho (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/acsu123/HOHO_H/main/Loading_UI"))() end)
-		addSub("Solix Hub (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/debunked69/Solixreworkkeysystem/refs/heads/main/solix%20new%20keyui.lua"))() end)
-		addSub("Aim Bot Blox Fruits (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/ParadozCode/CentuDox-Hub-Paradoz-Hub/refs/heads/main/CentudoxLoader.xyz", true))() end)
-		addSub("Thunder Z (com key)", function() loadstring(game:HttpGet(('https://raw.githubusercontent.com/ThunderZ-05/HUB/main/TestKey')))() end)
-
-	elseif name == "🏐 Voleyball Legends" then
-		addSub("Napoleon Hub (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/raydjs/napoleonHub/refs/heads/main/src.lua"))() end)
-		addSub("SkibidiCen (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/SkibidiCen/MainMenu/main/Code"))() end)
-		addSub("Azure (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/notjohnnylol/boiazuresotuff/refs/heads/main/loader"))() end)
-		addSub("Sigma Hub (bugado)", function() loadstring(game.HttpGet(game, 'https://raw.githubusercontent.com/Xm2iufas09ijmF/sigma-hub/refs/heads/main/temp.lua'))() end)
-		addSub("OMG hub (??? Key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Omgshit/Scripts/main/MainLoader.lua"))() end)
-		addSub("Hitbox Expander (sem key)", function() loadstring(game:HttpGet("https://rawscripts.net/raw/UPD-Volleyball-Legends-Hitbox-expander-NO-KEY-63949"))() end)
-
-	elseif name == "⚽ Blue Lock" then
-		addSub("BL Rivals (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/LHking123456/7L93r5NhJxqYu/refs/heads/main/BLRivals"))() end)
-		addSub("SkibidiCen Blue Lock (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/SkibidiCen/MainMenu/main/Code"))() end)
-
-	elseif name == "🎭 Forsaken" then
-		addSub("SkibidiCen Forsaken (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/SkibidiCen/MainMenu/main/Code"))() end)
-		addSub("Moondiety (com key)", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/m00ndiety/Moondiety/refs/heads/main/Loader'))() end)
-		addSub("Sak Forsaken (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/OhhMyGehlee/sak/refs/heads/main/for"))() end)
-		addSub("SNT HUB (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Snowt69/SNT-HUB/refs/heads/main/Forsaken"))() end)
-		addSub("Ghostbin Forsaken (com key)", function() loadstring(game:HttpGet("https://ghostbin.axel.org/paste/5sppg/raw"))() end)
-
-	elseif name == "🌴 Grow a Garden" then
-		addSub("Speed Hub X (com key) ⭐", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/AhmadV99/Speed-Hub-X/main/Speed%20Hub%20X.lua"))() end)
-		addSub("Best Autofarm (com key)", function() loadstring(game:HttpGet("https://rawscripts.net/raw/Grow-a-Garden-Best-Autofarm-Script-GUI-73698"))() end)
-
-	elseif name == "🐟 Fish" then
-		addSub("Disch Script (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/hakariqScripts/disch2/refs/heads/main/disch%20script"))() end)
-		addSub("Space Hub (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/ago106/SpaceHub/refs/heads/main/Multi"))() end)
-		addSub("Eclipse Fisch (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/yolobradda/eclipsefisch/refs/heads/main/eclipsefisch"))() end)
-		addSub("Cayden Scripts (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/cayden305/Scripts/refs/heads/main/FischObfuscated.lua"))() end)
-
-	elseif name == "👊 Campos de Batalha" then
-		addSub("Aim Lock/Block (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Cyborg883/CombatGUI/refs/heads/main/TSBCombatGUI"))() end)
-		addSub("Nova Hub (sem key) ⭐", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Silly-Nova/Nova-Hub/refs/heads/main/TheStrongestBattlegrounds.lua"))() end)
-
-	elseif name == "🛶 Build a Boat" then
-		addSub("Auto Build System (sem key) ⭐", function() loadstring(game:HttpGet(("https://raw.githubusercontent.com/max2007killer/auto-build-not-limit/main/buildaboatv2obs.txt"),true))() end)
-		addSub("BABFT Hub (com key)", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/TheRealAsu/BABFT/refs/heads/main/Loader.lua'))() end)
-
-	elseif name == "🔪 MM2" then
-		addSub("Capybara Hub (com key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/BaconScrr/Murder-Mystery-2/refs/heads/main/Capybara%20Hub"))() end)
-		addSub("YARHM (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Joystickplays/psychic-octo-invention/main/source/yarhm/1.20/yarhm.lua"))() end)
-		addSub("Vertex Peak (sem key)", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/vertex-peak/vertex/refs/heads/main/loadstring'))() end)
-		addSub("XHub Wave (sem key)", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/wave-code-top/xhub/refs/heads/main/xhub.lua", true))() end)
-
-	elseif name == "⛏️ The Forge" then
-		addSub("Haze Hub (sem key)", function() loadstring(game:HttpGet("https://haze.wtf/api/script"))() end)
-		addSub("Nousigi (com key)", function() loadstring(game:HttpGet("https://nousigi.com/loader.lua"))() end)
-		addSub("Polluted (sem key)", function() loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/ecfcccea43f60fa4c46009f854c06a52.lua"))() end)
-		addSub("Zenith (com key)", function() loadstring(game:HttpGet("https://zenithhub.cloud/panel/script"))() end)
-		addSub("Rift Hub (com key)", function() loadstring(game:HttpGet("https://rifton.top/loader.lua"))() end)
-		addSub("Lunor (com key)", function() loadstring(game:HttpGet("https://lunor.dev/loader"))() end) -- Corrigido de 'en' para 'end)'
-    end -- Fecha o bloco if/elseif das categorias
-
-    -- Lógica de troca de abas
-    button.MouseButton1Click:Connect(function()
-        for _, p in pairs(pages) do p.Visible = false end
-        page.Visible = true
-    end)
-end -- Fecha o laço for das tabs
-
--- Notificação inicial de sucesso
-SpawnNotification()
+btnFarm.MouseButton1Click:Connect(function()
+    farmAtivo = not farmAtivo
+    if farmAtivo then
+        btnFarm.Text = "AUTO FARM: ON"
+        btnFarm.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
+        if not loopFarm or loopFarm.Status == Enum.Status.Suspended or loopFarm.Status == Enum.Status.Dead then
+            loopFarm = task.spawn(loop)
+        end
+    else
+        btnFarm.Text = "AUTO FARM: OFF"
+        btnFarm.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    end
+end)
